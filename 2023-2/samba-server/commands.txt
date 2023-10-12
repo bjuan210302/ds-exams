@@ -1,1 +1,1 @@
-docker run -it --name samba -p 139:139 -p 445:445 -v ~/samba/ -d dperson/samba -p
+docker run -it --name samba -p 139:139 -p 445:445 -v ~/samba/ -d dperson/samba -p -S -s "public;/share;yes;no;yes"
