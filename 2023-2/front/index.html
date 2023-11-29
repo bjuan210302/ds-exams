@@ -19,12 +19,13 @@
         <label for="fileInput">Choose a file:</label>
         <input type="file" id="fileInput" name="fileInput" accept="*">
         <button type="button" onclick="sendFiles()">Upload File</button>
+        <button type="button" onclick="sendFiles(true)">Update File</button>
     </form>
 </body>
 
 <script>
-    const SEVER_URL = "http://localhost:80/fast-api"
-    // const SEVER_URL = "http://localhost:8000"
+    // const SEVER_URL = "http://localhost:80/fast-api"
+    const SEVER_URL = "http://localhost:8000"
 
     async function populateFileList() {
         const fileList = document.getElementById('fileList');
@@ -45,6 +46,14 @@
                 for (const file of files) {
                     const listItem = document.createElement('li');
                     listItem.textContent = file;
+
+                    // Add delete button
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', () => deleteFile(file));
+
+                    listItem.appendChild(deleteButton);
+
                     fileList.appendChild(listItem);
                 }
             } else {
@@ -55,7 +64,26 @@
         }
     }
 
-    async function sendFiles() {
+    async function deleteFile(itemName) {
+        try {
+            // URL-encode the itemName
+            const encodedItemName = encodeURIComponent(itemName);
+
+            // Make a GET request to the remove endpoint
+            const response = await fetch(`${SEVER_URL}/blob/remove/${encodedItemName}`);
+
+            // Check if the request was successful (status code 200-299)
+            if (response.ok) {
+                alert('Succefully deleted!');
+            } else {
+                alert('Failed to delete file. Status: ' + (await response.json()).detail);
+            }
+        } catch (error) {
+            alert('An error occurred while deleting the file: ' + error.message);
+        }
+    }
+
+    async function sendFiles(isUpdate = false) {
         const fileInput = document.getElementById('fileInput');
         const files = fileInput.files;
 
@@ -72,8 +100,10 @@
         }
 
         try {
+            // Select endpoint
+            const endpoint = isUpdate ? 'update' : 'upload'
             // Make a POST request using fetch
-            const response = await fetch(`${SEVER_URL}/blob/upload`, {
+            const response = await fetch(`${SEVER_URL}/blob/${endpoint}`, {
                 method: 'POST',
                 body: formData,
             });
@@ -82,7 +112,7 @@
             if (response.ok) {
                 alert('Files sent successfully!');
             } else {
-                alert('Failed to send files. Status: ' + response.status);
+                alert('Failed to send files. Status: ' + (await response.json()).detail);
             }
         } catch (error) {
             alert('An error occurred while sending files: ' + error.message);

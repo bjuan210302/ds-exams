@@ -1,5 +1,5 @@
 from smb.SMBConnection import SMBConnection
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -46,11 +46,12 @@ async def remove_item(item_name):
 
 
 @app.post("/blob/upload")
-async def write_item(file: UploadFile):
+async def write_item(file: UploadFile, response: Response):
     file_name = file.filename
 
     file_exists = any(x == file_name for x in (await list_items()))
     if file_exists:
+        response.status_code = 400
         return {"detail": "file already exists"}
 
     conn.storeFile(share_name, '/' + file_name, file.file)
@@ -58,11 +59,12 @@ async def write_item(file: UploadFile):
 
 
 @app.post("/blob/update")
-async def write_item(file: UploadFile):
+async def write_item(file: UploadFile, response: Response):
     file_name = file.filename
 
     file_exists = any(x == file_name for x in (await list_items()))
     if not file_exists:
+        response.status_code = 400
         return {"detail": "Cannot update, file doesn't exists"}
 
     await remove_item(file_name)
